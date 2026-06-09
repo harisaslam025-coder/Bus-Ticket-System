@@ -41,7 +41,11 @@ connectDB();
 app.use(helmet());
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
+    // Allow all origins. Using `origin: true` reflects the request origin
+    // in the `Access-Control-Allow-Origin` header. Keep `credentials: true`
+    // if you need to send cookies; note this will not set `*` when
+    // credentials are enabled.
+    origin: true,
     credentials: true,
   })
 );
