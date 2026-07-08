@@ -16,7 +16,8 @@ function BookingSuccessContent() {
 
   const { data: bookingData, isLoading: bookingLoading } = useGetBookingByIdQuery(bookingId, {
     skip: !bookingId,
-    pollingInterval: bookingId ? 3000 : 0,
+    pollingInterval:
+      bookingId && (!bookingData || bookingData?.data?.booking?.status === 'pending') ? 3000 : 0,
   });
   const { data: ticketData, isLoading: ticketLoading } = useGetTicketByBookingQuery(bookingId, {
     skip: !bookingId || bookingData?.data?.booking?.status !== 'confirmed',
