@@ -16,10 +16,13 @@ function BookingSuccessContent() {
   const bookingId = params.get('bookingId');
   const [pollingInterval, setPollingInterval] = useState(3000);
 
-  const { data: bookingData, isLoading: bookingLoading } = useGetBookingByIdQuery(bookingId, {
-    skip: !bookingId,
-    pollingInterval,
-  });
+  const { data: bookingData, isLoading: bookingLoading } = useGetBookingByIdQuery(
+    { id: bookingId, confirm: true },
+    {
+      skip: !bookingId,
+      pollingInterval,
+    }
+  );
 
   useEffect(() => {
     if (bookingData?.data?.booking?.status && bookingData.data.booking.status !== 'pending') {

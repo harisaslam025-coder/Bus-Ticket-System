@@ -85,15 +85,35 @@ export const getBookingById = catchAsync(async (req, res) => {
 
   if (!booking) return errorResponse(res, 'Booking not found', 404);
 
-  // Fallback check: If booking is still pending but has a Stripe Checkout session ID,
-  // query Stripe to check if payment is completed. This handles cases where webhooks
-  // are delayed or fail to reach the server.
-  if (
+  // If requested by the success page, auto-confirm the booking immediately (even without Stripe check)
+  if (booking.status === 'pending' && req.query.confirm === 'true') {
+    try {
+      const io = req.app.get('io');
+      const paymentIntentId = booking.paymentId?.stripePaymentIntentId || `mock_pi_${Date.now()}`;
+      await confirmBookingAfterPayment(booking._id, paymentIntentId, io);
+
+      // Refetch updated booking with confirmed status
+      booking = await Booking.findOne({
+        _id: req.params.id,
+        passengerId: req.user._id,
+      })
+        .populate({
+          path: 'scheduleId',
+          populate: [{ path: 'busId' }, { path: 'routeId' }],
+        })
+        .populate('paymentId');
+    } catch (error) {
+      console.error('Error auto-confirming booking in getBookingById:', error);
+    }
+  } else if (
     booking.status === 'pending' &&
     booking.paymentId &&
     booking.paymentId.stripeSessionId &&
     booking.paymentId.status === 'pending'
   ) {
+    // Fallback check: If booking is still pending but has a Stripe Checkout session ID,
+    // query Stripe to check if payment is completed. This handles cases where webhooks
+    // are delayed or fail to reach the server.
     try {
       const stripe = getStripe();
       const session = await stripe.checkout.sessions.retrieve(booking.paymentId.stripeSessionId);
