@@ -219,17 +219,26 @@ export const confirmBookingAfterPayment = async (bookingId, paymentIntentId, io)
     qrCodeImage,
   });
 
-  const passenger = await User.findById(booking.passengerId);
-  const pdfBuffer = await generateTicketPDF({
-    passenger,
-    booking,
-    schedule: booking.scheduleId,
-    route: booking.scheduleId.routeId,
-    bus: booking.scheduleId.busId,
-    qrCodeImage,
-  });
-
-  await sendBookingConfirmationEmail(passenger, booking, pdfBuffer);
+  // Generate PDF and send confirmation email in the background
+  // to avoid blocking the API response or Stripe webhook response.
+  (async () => {
+    try {
+      const passenger = await User.findById(booking.passengerId);
+      if (passenger) {
+        const pdfBuffer = await generateTicketPDF({
+          passenger,
+          booking,
+          schedule: booking.scheduleId,
+          route: booking.scheduleId.routeId,
+          bus: booking.scheduleId.busId,
+          qrCodeImage,
+        });
+        await sendBookingConfirmationEmail(passenger, booking, pdfBuffer);
+      }
+    } catch (err) {
+      console.error('Error generating PDF or sending email in background:', err);
+    }
+  })();
 
   return booking;
 };

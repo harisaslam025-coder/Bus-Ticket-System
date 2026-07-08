@@ -53,14 +53,14 @@ app.use(compression());
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/v1/payments/webhook') {
+  if (req.originalUrl.startsWith('/api/v1/payments/webhook')) {
     express.raw({ type: 'application/json' })(req, res, next);
   } else {
     next();
   }
 });
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/v1/payments/webhook') {
+  if (req.originalUrl.startsWith('/api/v1/payments/webhook')) {
     next();
   } else {
     express.json({ limit: '10mb' })(req, res, next);
