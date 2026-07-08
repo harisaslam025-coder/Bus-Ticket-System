@@ -86,7 +86,10 @@ export const getBookingById = catchAsync(async (req, res) => {
   if (!booking) return errorResponse(res, 'Booking not found', 404);
 
   // If requested by the success page, auto-confirm the booking immediately (even without Stripe check)
-  if (booking.status === 'pending' && req.query.confirm === 'true') {
+  if (
+    booking.status === 'pending' &&
+    (req.query.confirm === 'true' || req.query['confirm-true'] !== undefined)
+  ) {
     try {
       const io = req.app.get('io');
       const paymentIntentId = booking.paymentId?.stripePaymentIntentId || `mock_pi_${Date.now()}`;
